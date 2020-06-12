@@ -32,6 +32,7 @@ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR P
 #include "LedPwm.h"
 #include "LedRGB.h"
 #include "nrf52gpio.h"
+#include "gpioExtension.h"
 
 
     typedef struct { 

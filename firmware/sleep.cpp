@@ -23,15 +23,23 @@ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR P
 // Prepare sense pins for waking up from complete shutdown
 /**************************************************************************************************************************/
 void setupWakeUp() {
-  for(int j = 0; j < MATRIX_ROWS; ++j) {                             
-    //set the current row as OUPUT and LOW
-    pinMode(rows[j], OUTPUT);
-    #if DIODE_DIRECTION == COL2ROW                                         
-    digitalWrite(rows[j], LOW);                                       // 'enables' a specific row to be "low" 
+  for(int j = 0; j < MATRIX_ROWS; ++j) {
+
+    #if GPIO_EXPAND == SHIFT_REGISTER && DIODE_DIRECTION == COL2ROW                         
+      shiftOutToMakeAllLow();
+    #elif GPIO_EXPAND == SHIFT_REGISTER && DIODE_DIRECTION == ROW2COL                         
+      shiftOutToMakeAllHigh();
     #else
-    digitalWrite(rows[j], HIGH);                                       // 'enables' a specific row to be "HIGH"
+      //set the current row as OUPUT and LOW
+      pinMode(rows[j], OUTPUT);
+      #if DIODE_DIRECTION == COL2ROW                                         
+      digitalWrite(rows[j], LOW);                                       // 'enables' a specific row to be "low" 
+      #else
+      digitalWrite(rows[j], HIGH);                                       // 'enables' a specific row to be "HIGH"
+      #endif
     #endif
   }
+
   //loops thru all of the columns
   for (int i = 0; i < MATRIX_COLS; ++i) {
       #if DIODE_DIRECTION == COL2ROW                                         

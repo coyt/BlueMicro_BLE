@@ -17,6 +17,15 @@ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR P
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
+
+
+/*
+Working keyboard config for LOST60 V1.0 hardware (no shift registers)
+and for LOST60 V2.0 hardware (shift registers for scanning columns)
+NOTE: uses modified "Variant.cpp" for adafruit_feather_nrf52840 to fix pin mappings
+*/
+
+
 #include <stdint.h>
 #include "hid_keycodes.h"
 #include "hardware_variants.h"
@@ -31,7 +40,7 @@ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR P
 #define _QWERTY 0
 #define _L1  1
 #define _L2  2
-#define _L3  3
+//#define _L3  3
 
 void setupKeymap();
 extern std::array<std::array<Key, MATRIX_COLS>, MATRIX_ROWS> matrix;

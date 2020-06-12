@@ -107,22 +107,55 @@ void setupMatrix(void) {
 // Keyboard Scanning
 /**************************************************************************************************************************/
 
+//everywhere we set a bias pin - we need to have an option to set the shift register pin high 
+//dude is reading on all columns - so we need to have the "shift register" control always on the rows - we handle the col or row reads separately so don't worry bout that. 
+
 #if DIODE_DIRECTION == COL2ROW
-#define writeRow(r) digitalWrite(r,LOW)
-#define modeCol(c) pinMode(c, INPUT_PULLUP)
-#ifdef NRF52840_XXAA
-#define gpioIn (((uint64_t)(NRF_P1->IN)^0xffffffff)<<32)|(NRF_P0->IN)^0xffffffff
+
+  //case: COL2ROW & GPIO_EXPAND
+  #if GPIO_EXPAND == SHIFT_REGISTER
+    #define writeRow(r) shiftOutToMakePinLow(r); 
+    #define modeCol(c) pinMode(c, INPUT_PULLUP) 
+    #ifdef NRF52840_XXAA
+      #define gpioIn (((uint64_t)(NRF_P1->IN)^0xffffffff)<<32)|(NRF_P0->IN)^0xffffffff
+    #else
+      #define gpioIn (NRF_GPIO->IN)^0xffffffff
+    #endif
+
+  //case: COL2ROW & NO_GPIO_EXPAND
+  #else
+    #define writeRow(r) digitalWrite(r,LOW)
+    #define modeCol(c) pinMode(c, INPUT_PULLUP) 
+    #ifdef NRF52840_XXAA
+      #define gpioIn (((uint64_t)(NRF_P1->IN)^0xffffffff)<<32)|(NRF_P0->IN)^0xffffffff
+    #else
+      #define gpioIn (NRF_GPIO->IN)^0xffffffff
+    #endif
+  #endif
+
 #else
-#define gpioIn (NRF_GPIO->IN)^0xffffffff
-#endif
-#else
-#define writeRow(r) digitalWrite(r,HIGH)
-#define modeCol(c) pinMode(c, INPUT_PULLDOWN)
-#ifdef NRF52840_XXAA
-#define gpioIn (((uint64_t)NRF_P1->IN)<<32)|(NRF_P0->IN)
-#else
-#define gpioIn NRF_GPIO->IN
-#endif
+
+  //case: ROW2COL & GPIO_EXPAND
+  #if GPIO_EXPAND == SHIFT_REGISTER
+    #define writeRow(r) shiftOutToMakePinHigh(r)
+    #define modeCol(c) pinMode(c, INPUT_PULLDOWN)
+    #ifdef NRF52840_XXAA
+      #define gpioIn (((uint64_t)NRF_P1->IN)<<32)|(NRF_P0->IN)
+    #else
+      #define gpioIn NRF_GPIO->IN
+    #endif
+
+  //case: ROW2COL & NO_GPIO_EXPAND
+  #else
+    #define writeRow(r) digitalWrite(r,HIGH)
+    #define modeCol(c) pinMode(c, INPUT_PULLDOWN)
+    #ifdef NRF52840_XXAA
+      #define gpioIn (((uint64_t)NRF_P1->IN)<<32)|(NRF_P0->IN)
+    #else
+      #define gpioIn NRF_GPIO->IN
+    #endif
+  #endif
+
 #endif
 
 /**************************************************************************************************************************/
@@ -132,6 +165,7 @@ void scanMatrix() {
 
     keyboardstate.timestamp  = millis();   // lets call it once per scan instead of once per key in the matrix
     //take care when selecting debouncetime - each row has a delay of 1ms inbetween - so if you have 5 rows, setting debouncetime to 2 is at least 5ms...
+
     #ifdef NRF52840_XXAA
     static uint64_t pindata[MATRIX_ROWS][DEBOUNCETIME];
     uint64_t pinreg;
@@ -166,7 +200,16 @@ void scanMatrix() {
             else                   KeyScanner::release(keyboardstate.timestamp, j, i);
         }
 
-        pinMode(rows[j], INPUT);                                                   // 'disables' the row that was just scanned
+        #if GPIO_EXPAND == SHIFT_REGISTER
+          #if #if DIODE_DIRECTION == COL2ROW
+            shiftOutToMakeAllLow();  
+          #else
+            shiftOutToMakeAllHigh();
+          #endif
+        #else
+          pinMode(rows[j], INPUT);                                      // 'disables' the row that was just scanned
+        #endif
+
     }
     for (int i = 0; i < MATRIX_COLS; ++i) {                             //Scanning done, disabling all columns
         pinMode(columns[i], INPUT);                                     
